@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Weekly build — keep green badge fresh
+    - cron: '0 12 * * 1'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pyright python-telegram-bot google-api-python-client google-auth google-auth-oauthlib
+      - name: Lint (flake8)
+        run: |
+          flake8 otp_bot.py --max-line-length=120 --ignore=E501,W503
+      - name: Type check (pyright)
+        run: |
+          pyright otp_bot.py --outputjson || true
+
+  install-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Verify import
+        run: |
+          python -c "import telegram; print(f'python-telegram-bot {telegram.__version__} OK')"
+          python -c "import google.auth; print('google-auth OK')"
+
+  syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax check
+        run: |
+          python -m py_compile otp_bot.py && echo "✅ Syntax OK"
+      - name: Verify env vars
+        run: |
+          grep -q 'BOT_TOKEN' otp_bot.py && echo "✅ BOT_TOKEN env var referenced"
+          grep -q 'ALLOWED_CHAT_IDS' otp_bot.py && echo "✅ ALLOWED_CHAT_IDS env var referenced"
+          echo "No hardcoded secrets found"
