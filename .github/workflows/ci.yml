@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    # Weekly build — keep green badge fresh
-    - cron: '0 12 * * 1'
+    # Every 3 days at 12:00 UTC (~19:00 WIB)
+    - cron: '0 12 */3 * *'
 
 jobs:
   lint:
