@@ -2,6 +2,10 @@
 credentials.json
 tokens.json
 
+# State files
+.otp_auth_state.json
+.otp_mode_state.json
+
 # Python
 __pycache__/
 *.py[cod]
